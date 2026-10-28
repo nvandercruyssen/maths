@@ -38,22 +38,29 @@ body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   line-height: 1.5;
 }
-h1 {
+header {
   margin: 0 -16px 32px;
-  padding: 40px 16px 36px;
+  padding: 40px 16px 32px;
   text-align: center;
-  font-size: clamp(1.7rem, 5vw, 2.4rem);
   color: #fff;
   background: linear-gradient(135deg, #1e3a8a, #4f46e5);
 }
-h1::after {
+header::after {
   content: "∑ π √ ∞ ∫";
   display: block;
-  margin-top: 6px;
+  margin-top: 14px;
   font-size: 1rem;
-  font-weight: 400;
   letter-spacing: .6em;
   opacity: .6;
+}
+h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 5vw, 2.4rem);
+}
+header p {
+  margin: 6px 0 0;
+  font-size: 1.05rem;
+  opacity: .85;
 }
 h2, ol { max-width: 760px; margin-left: auto; margin-right: auto; }
 h2 {
@@ -119,7 +126,10 @@ li a:hover, li a:focus-visible { background: color-mix(in srgb, var(--c) 10%, tr
 </style>
 </head>
 <body>
+<header>
 <h1>Cours de mathématiques</h1>
+<p>Lycée Jean Perrin – Lambersart<br>Année scolaire 2026-2027</p>
+</header>
 
 <h2>Seconde</h2>
 <ol>
