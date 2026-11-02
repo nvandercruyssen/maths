@@ -122,6 +122,8 @@ li a::after {
   color: var(--c);
   border: 1px solid var(--c);
 }
+li a[href*="mathalea"]::after { content: "Exercices"; }
+ol.depuis-zero { counter-reset: chap -1; }
 li a:hover, li a:focus-visible { background: color-mix(in srgb, var(--c) 10%, transparent); }
 </style>
 </head>
@@ -132,10 +134,11 @@ li a:hover, li a:focus-visible { background: color-mix(in srgb, var(--c) 10%, tr
 </header>
 
 <h2>Seconde</h2>
-<ol>
+<ol class="depuis-zero">
+<li><a href="https://mathalea.fr/alea/?uuid=dd7d1&amp;id=2N31-flash1&amp;n=2&amp;d=10&amp;qcm=0&amp;cd=1&amp;tip=0&amp;alea=VSQ6&amp;uuid=08a2a&amp;id=2N31-flash2&amp;n=2&amp;d=10&amp;qcm=0&amp;cd=1&amp;tip=0&amp;alea=e7wH&amp;uuid=07df0&amp;id=2N31-flash3&amp;n=2&amp;d=10&amp;qcm=0&amp;cd=1&amp;tip=0&amp;alea=LM48&amp;uuid=1894f&amp;id=2N31-flash4&amp;n=2&amp;d=10&amp;qcm=0&amp;cd=1&amp;tip=0&amp;alea=gezz&amp;uuid=b51bd&amp;id=2N31-1&amp;n=2&amp;d=10&amp;s=0-0-1-1*1111&amp;s2=2&amp;cd=1&amp;tip=0&amp;alea=n90X&amp;uuid=cb572&amp;id=2N31-3&amp;n=2&amp;d=10&amp;s=1&amp;s2=2&amp;cd=1&amp;tip=0&amp;alea=YLfo&amp;uuid=1fc02&amp;id=2N32-2&amp;n=3&amp;d=10&amp;s=4&amp;s2=2&amp;cd=1&amp;tip=0&amp;alea=2hdz" target="_blank" rel="noopener">Rappels : Fractions</a></li>
 <li><a href="2de/ensembles_de_nombres.pdf">Ensembles de nombres</a></li>
 <li><a href="2de/algebre1.pdf">Algèbre 1</a></li>
-  <li><a href="2de/translations_et_vecteurs.pdf">Translations et vecteurs</a></li>
+<li><a href="2de/translations_et_vecteurs.pdf">Translations et vecteurs</a></li>
 </ol>
 
 <h2>Terminale spécialité</h2>
