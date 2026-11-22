@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>Averse</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root{
+    --cyan:#3cc8ee; --cyan-pale:#d3f2fb; --blue:#1a8fe3; --gray:#c9cdd1; --gray-l:#e6e8ea;
+    --txt:#222; --muted:#8a9096;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:#fff;color:var(--txt);
+    font-family:-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+  .view{position:fixed;inset:0;display:flex;flex-direction:column;
+    padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+  .hidden{display:none!important}
+
+  /* ---------- Barre du haut ---------- */
+  .topbar{height:52px;flex:0 0 52px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 12px;border-bottom:1px solid var(--gray-l);background:#fff;position:relative;z-index:500}
+  .topbar .side{width:72px;display:flex;align-items:center}
+  .topbar .side.r{justify-content:flex-end;gap:14px}
+  .ico{width:26px;height:26px;color:var(--blue)}
+  .place{display:flex;align-items:center;gap:6px;color:var(--blue);font-size:19px;font-weight:600;
+    max-width:60vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .place svg{flex:0 0 auto}
+  .back{color:var(--blue);font-size:18px;display:flex;align-items:center;gap:2px}
+  .title{font-size:18px;font-weight:600;max-width:46vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* ---------- Écran principal ---------- */
+  #main .content{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+  .status{text-align:center;font-size:20px;margin:14px 0 2px;min-height:26px}
+  .substatus{text-align:center;font-size:14px;color:var(--muted);min-height:18px}
+  .compass{width:min(86vw,360px);margin:10px auto 8px;display:block}
+  .next{border-top:1px solid var(--gray-l);margin-top:auto}
+  .next h2{font-size:16px;font-weight:500;text-align:center;margin:8px 0 0}
+  #chart{width:100%;display:block}
+  .bottombar{display:flex;border-top:1px solid var(--gray-l);height:64px;flex:0 0 64px}
+  .bottombar > *{flex:1;display:flex;align-items:center;justify-content:center;gap:10px;font-size:19px}
+  .bottombar > * + *{border-left:1px solid var(--gray-l)}
+  #btnRadar{color:var(--blue)}
+  .credits{font-size:11px;color:var(--muted);text-align:center;padding:6px 8px 8px}
+  .credits a{color:var(--muted)}
+  .err{color:#c0392b}
+
+  /* ---------- Radar ---------- */
+  #map{flex:1;background:#e9eef2}
+  .stamp{position:absolute;left:50%;transform:translateX(-50%);bottom:92px;z-index:600;
+    background:rgba(255,255,255,.85);padding:3px 10px;border-radius:4px;font-size:17px;
+    font-variant-numeric:tabular-nums;pointer-events:none}
+  .timeline{position:relative;z-index:600;height:64px;flex:0 0 64px;background:#fff;
+    border-top:1px solid var(--gray-l);display:flex;align-items:center;gap:10px;padding:0 12px}
+  #play{width:40px;height:40px;border-radius:50%;background:var(--blue);display:flex;
+    align-items:center;justify-content:center;flex:0 0 40px}
+  .track{flex:1;position:relative;height:44px}
+  .ticks{position:absolute;left:0;right:0;top:2px;height:16px;font-size:12px;color:#444}
+  .ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+  #slider{position:absolute;left:0;right:0;bottom:4px;width:100%;margin:0;
+    -webkit-appearance:none;appearance:none;height:22px;background:transparent}
+  #slider::-webkit-slider-runnable-track{height:3px;background:#333;border-radius:2px}
+  #slider::-moz-range-track{height:3px;background:#333}
+  #slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+    background:#fff;border:2px solid var(--blue);margin-top:-9px;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  #slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid var(--blue)}
+  .legend{position:absolute;right:10px;top:62px;z-index:600;background:rgba(255,255,255,.9);
+    border-radius:6px;padding:6px 8px;font-size:11px;line-height:1.5}
+  .legend i{display:inline-block;width:14px;height:10px;margin-right:5px;vertical-align:middle;border-radius:2px}
+  .me{width:16px;height:16px;border-radius:50%;background:#1a6fe3;border:3px solid #fff;
+    box-shadow:0 0 0 2px rgba(26,111,227,.35),0 1px 4px rgba(0,0,0,.4)}
+  .leaflet-control-attribution{font-size:10px}
+
+  /* ---------- Choix du lieu ---------- */
+  #picker{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:2000;display:flex;align-items:flex-start;justify-content:center}
+  #picker .card{background:#fff;width:min(94vw,460px);margin-top:calc(env(safe-area-inset-top) + 50px);
+    border-radius:12px;padding:14px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+  #picker input{width:100%;font-size:17px;padding:10px 12px;border:1px solid var(--gray);border-radius:8px}
+  #picker .row{display:block;width:100%;text-align:left;padding:11px 6px;border-bottom:1px solid var(--gray-l);font-size:16px}
+  #picker .row small{color:var(--muted)}
+  #picker .gps{color:var(--blue);font-weight:600}
+  #picker .close{display:block;margin:10px auto 0;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- ===================== ÉCRAN PRINCIPAL ===================== -->
+<section id="main" class="view">
+  <div class="topbar">
+    <div class="side"></div>
+    <button class="place" id="btnPlace" aria-label="Changer de lieu">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3 3 10.5l7.5 2.9L13.5 21z"/></svg>
+      <span id="placeName">…</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <div class="side r">
+      <button id="btnRefresh" aria-label="Actualiser">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="status" id="status">Chargement…</div>
+    <div class="substatus" id="substatus"></div>
+    <svg class="compass" id="compass" viewBox="0 0 300 300"></svg>
+    <div class="next">
+      <h2>Heure suivante</h2>
+      <svg id="chart" viewBox="0 0 360 165"></svg>
+    </div>
+  </div>
+
+  <div class="bottombar">
+    <div id="weatherNow"><span id="wIcon"></span><span id="temp">–</span></div>
+    <button id="btnRadar">Radar HD</button>
+  </div>
+  <div class="credits">Prévisions : <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (modèles Météo-France) · Radar : <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a></div>
+</section>
+
+<!-- ===================== RADAR ===================== -->
+<section id="radar" class="view hidden">
+  <div class="topbar">
+    <div class="side"><button class="back" id="btnBack">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>Retour</button></div>
+    <div class="title" id="radarTitle">Radar</div>
+    <div class="side r">
+      <button id="btnLocate" aria-label="Recentrer">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 3 3 10.5l7.5 2.9L13.5 21z"/></svg>
+      </button>
+    </div>
+  </div>
+  <div id="map"></div>
+  <div class="legend">
+    <div><i style="background:#9bd9f5"></i>Faible</div>
+    <div><i style="background:#2f7fd8"></i>Modérée</div>
+    <div><i style="background:#a5326e"></i>Forte</div>
+  </div>
+  <div class="stamp" id="stamp">–</div>
+  <div class="timeline">
+    <button id="play" aria-label="Lecture">
+      <svg id="playIco" width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M7 4v16l13-8z"/></svg>
+    </button>
+    <div class="track">
+      <div class="ticks" id="ticks"></div>
+      <input type="range" id="slider" min="0" max="0" value="0" step="1">
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CHOIX DU LIEU ===================== -->
+<div id="picker" class="hidden">
+  <div class="card">
+    <input id="search" type="search" placeholder="Rechercher une ville…" autocomplete="off">
+    <div id="results"></div>
+    <button class="row gps" id="btnGps">📍 Utiliser ma position</button>
+    <button class="close" id="btnClose">Fermer</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+'use strict';
+/* =========================================================
+   Réglages
+   ========================================================= */
+const DEFAULT_PLACE = { name: 'Lambersart', lat: 50.6500, lon: 3.0250, gps: false };
+const RAIN_MIN = 0.1;           // mm/h : en dessous, on considère qu'il ne pleut pas
+const LEVELS = { faible: 1, moyenne: 4, forte: 10 };   // mm/h (repères du graphique)
+const REFRESH_MS = 5 * 60 * 1000;
+
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+const hm = t => { const d = new Date(t); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+const store = {
+  get(k, def) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+
+let place = store.get('averse.place', null);
+let wx = null;          // dernières données de prévision
+
+/* =========================================================
+   Lieu : GPS, recherche, géocodage inverse
+   ========================================================= */
+function getPosition() {
+  return new Promise((ok, ko) => {
+    if (!navigator.geolocation) return ko(new Error('pas de GPS'));
+    navigator.geolocation.getCurrentPosition(
+      p => ok({ lat: p.coords.latitude, lon: p.coords.longitude }),
+      ko, { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 });
+  });
+}
+async function reverseName(lat, lon) {
+  try {
+    const r = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=fr`);
+    const j = await r.json();
+    return j.city || j.locality || 'Ma position';
+  } catch { return 'Ma position'; }
+}
+async function useGps() {
+  const p = await getPosition();
+  place = { name: await reverseName(p.lat, p.lon), lat: p.lat, lon: p.lon, gps: true };
+  store.set('averse.place', place);
+}
+
+/* =========================================================
+   Prévisions Open-Meteo (Météo-France, pas de 15 min)
+   ========================================================= */
+async function fetchForecast(lat, lon) {
+  const base = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat.toFixed(4) + '&longitude=' + lon.toFixed(4) +
+    '&minutely_15=precipitation&past_minutely_15=2&forecast_minutely_15=7' +
+    '&current=temperature_2m,precipitation,weather_code,wind_direction_10m' +
+    '&hourly=wind_direction_700hPa&forecast_hours=2&past_hours=1&timeformat=unixtime&timezone=auto';
+  let r = await fetch(base + '&models=meteofrance_seamless');
+  if (!r.ok) r = await fetch(base);                // repli sur le modèle par défaut
+  if (!r.ok) throw new Error('Prévisions indisponibles (' + r.status + ')');
+  return r.json();
+}
+
+/* Les valeurs à 15 min sont des cumuls sur le quart d'heure précédent :
+   on les place au milieu du quart d'heure et on les convertit en mm/h. */
+function buildSeries(j) {
+  const m = j.minutely_15 || {};
+  const pts = [];
+  (m.time || []).forEach((t, i) => {
+    const v = m.precipitation[i];
+    if (v != null) pts.push({ t: (t - 450) * 1000, r: v * 4 });
+  });
+  return pts;
+}
+function rateAt(pts, t) {
+  if (!pts.length) return 0;
+  if (t <= pts[0].t) return pts[0].r;
+  for (let i = 1; i < pts.length; i++) {
+    if (t <= pts[i].t) {
+      const a = pts[i - 1], b = pts[i], k = (t - a.t) / (b.t - a.t);
+      return a.r + k * (b.r - a.r);
+    }
+  }
+  return pts[pts.length - 1].r;
+}
+
+function analyse(j) {
+  const pts = buildSeries(j);
+  const now = Date.now();
+  const minutes = [];
+  for (let k = 0; k <= 60; k++) minutes.push({ t: now + k * 60000, r: rateAt(pts, now + k * 60000) });
+  const rainingNow = minutes[0].r >= RAIN_MIN;
+  let start = null, end = null;
+  if (rainingNow) {
+    const e = minutes.find(p => p.r < RAIN_MIN); if (e) end = e.t;
+  } else {
+    const s = minutes.find(p => p.r >= RAIN_MIN);
+    if (s) { start = s.t; const e = minutes.find(p => p.t > s.t && p.r < RAIN_MIN); if (e) end = e.t; }
+  }
+  // direction d'arrivée des averses : vent en altitude (700 hPa), à défaut vent au sol
+  let dir = null;
+  const h = j.hourly;
+  if (h && h.wind_direction_700hPa) {
+    let best = null;
+    h.time.forEach((t, i) => {
+      const v = h.wind_direction_700hPa[i];
+      if (v != null && (best == null || Math.abs(t * 1000 - now) < Math.abs(h.time[best] * 1000 - now))) best = i;
+    });
+    if (best != null) dir = h.wind_direction_700hPa[best];
+  }
+  if (dir == null && j.current) dir = j.current.wind_direction_10m;
+  return { pts, now, minutes, rainingNow, start, end, dir,
+           temp: j.current ? j.current.temperature_2m : null,
+           code: j.current ? j.current.weather_code : null };
+}
+
+/* Arrondi à 5 min, cohérent avec la précision des données */
+function inMin(t, now) { return Math.max(0, Math.round((t - now) / 300000) * 5); }
+function hm5(t) { return hm(Math.round(t / 300000) * 300000); }
+
+/* =========================================================
+   Dessin : boussole
+   ========================================================= */
+function drawCompass(a) {
+  const svg = $('compass');
+  const raining = a && a.rainingNow;
+  const soon = a && (a.rainingNow || a.start);
+  let l1 = '…', l2 = '';
+  if (a) {
+    if (a.rainingNow) {
+      if (a.end) { const m = inMin(a.end, a.now); l1 = m <= 0 ? 'Fin' : 'Fin dans'; l2 = m <= 0 ? 'imminente' : m + ' min'; }
+      else { l1 = 'Pluie'; l2 = '> 1 h'; }
+    } else if (a.start) {
+      const m = inMin(a.start, a.now); l1 = m <= 0 ? 'Pluie' : 'Début dans'; l2 = m <= 0 ? 'imminente' : m + ' min';
+    } else { l1 = 'Pas de'; l2 = 'pluie'; }
+  }
+  const disc = raining ? 'var(--cyan-pale)' : (soon ? '#e4f6fc' : '#eef1f3');
+  const dot = soon ? 'var(--cyan)' : '#b8c2c9';
+  let drop = '';
+  if (a && soon && a.dir != null) {
+    const th = a.dir * Math.PI / 180, R = 100;
+    const x = 150 + R * Math.sin(th), y = 150 - R * Math.cos(th);
+    drop = `<g transform="translate(${x.toFixed(1)},${y.toFixed(1)})">
+      <circle r="33" fill="#fff" stroke="var(--cyan)" stroke-width="2.5"/>
+      <g transform="rotate(${(a.dir + 180).toFixed(0)})">
+        <path d="M0,-21 C9,-9 15,-1 15,6 A15,15 0 1 1 -15,6 C-15,-1 -9,-9 0,-21Z" fill="var(--cyan)"/>
+      </g></g>`;
+  }
+  const L = (t, x, y) => `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central"
+      font-size="30" fill="#b5bbc0" font-weight="300">${t}</text>`;
+  svg.innerHTML = `
+    <circle cx="150" cy="150" r="146" fill="#fff" stroke="#d7dadd" stroke-width="1.5"/>
+    ${L('N', 150, 22)}${L('S', 150, 278)}${L('W', 22, 150)}${L('E', 278, 150)}
+    <circle cx="150" cy="150" r="100" fill="none" stroke="#dcdfe2" stroke-width="13"/>
+    <circle cx="150" cy="150" r="88" fill="${disc}"/>
+    <circle cx="150" cy="150" r="44" fill="${dot}"/>
+    <text x="150" y="${l2 ? 140 : 150}" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="13" font-weight="600">${l1}</text>
+    <text x="150" y="162" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="18" font-weight="700">${l2}</text>
+    ${drop}`;
+}
+
+/* =========================================================
+   Dessin : graphique « Heure suivante »
+   ========================================================= */
+function yOf(r) {
+  // échelle par paliers : 0 → bas, Faible, Moyenne, Forte
+  const stops = [[0, 138], [LEVELS.faible, 112], [LEVELS.moyenne, 72], [LEVELS.forte, 32], [25, 14]];
+  if (r <= 0) return 138;
+  for (let i = 1; i < stops.length; i++) {
+    if (r <= stops[i][0]) {
+      const [r0, y0] = stops[i - 1], [r1, y1] = stops[i];
+      return y0 + (r - r0) / (r1 - r0) * (y1 - y0);
+    }
+  }
+  return 14;
+}
+function drawChart(a) {
+  const svg = $('chart');
+  const X0 = 0, X1 = 360;
+  let s = '';
+  // lignes de repère
+  [['Forte', LEVELS.forte], ['Moyenne', LEVELS.moyenne], ['Faible', LEVELS.faible]].forEach(([n, v]) => {
+    const y = yOf(v);
+    s += `<line x1="0" x2="360" y1="${y}" y2="${y}" stroke="#d5d8db" stroke-width="1"/>
+`;
+  });
+  s += `<line x1="0" x2="360" y1="138" y2="138" stroke="#d5d8db"/>`;
+  let labels = '';
+  [['Forte', LEVELS.forte], ['Moyenne', LEVELS.moyenne], ['Faible', LEVELS.faible]].forEach(([n, v]) => {
+    labels += `<text x="6" y="${yOf(v) - 6}" font-size="12" fill="#333" stroke="#fff" stroke-width="3" paint-order="stroke">${n}</text>`;
+  });
+  if (a) {
+    const xOf = t => X0 + (t - a.now) / 3600000 * (X1 - X0);
+    const up = [], lo = [], mid = [];
+    a.minutes.forEach(p => {
+      const x = xOf(p.t).toFixed(1);
+      mid.push(x + ',' + yOf(p.r).toFixed(1));
+      up.push(x + ',' + yOf(p.r > 0.02 ? p.r * 1.45 + 0.15 : p.r).toFixed(1));
+      lo.push(x + ',' + yOf(p.r * 0.6).toFixed(1));
+    });
+    s += `<polygon points="${up.join(' ')} ${lo.reverse().join(' ')}" fill="#d9dcdf" opacity=".75"/>`;
+    s += `<polyline points="${mid.join(' ')}" fill="none" stroke="var(--cyan)" stroke-width="2.5" stroke-linejoin="round"/>`;
+    // repères de début / fin
+    [a.start, a.end].forEach(t => {
+      if (t) { const x = xOf(t); s += `<line x1="${x}" x2="${x}" y1="10" y2="138" stroke="var(--cyan)" stroke-dasharray="3 3"/>`; }
+    });
+    // graduations toutes les 10 min, comme l'appli d'origine
+    let t = Math.ceil(a.now / 300000) * 300000;
+    if ((t - a.now) < 120000) t += 300000;
+    for (; t < a.now + 3600000 - 240000; t += 600000) {
+      const x = xOf(t);
+      s += `<line x1="${x}" x2="${x}" y1="138" y2="143" stroke="#999"/>
+            <text x="${x}" y="157" font-size="12" text-anchor="middle" fill="#333">${hm(t)}</text>`;
+    }
+  }
+  svg.innerHTML = s + labels;
+}
+
+/* =========================================================
+   Icône météo (code WMO)
+   ========================================================= */
+function weatherIcon(code) {
+  const c = '#1a8fe3';
+  const cloud = `<path d="M8 18h9a4 4 0 0 0 .5-7.97A6 6 0 0 0 6.1 11.1 3.5 3.5 0 0 0 8 18z" fill="none" stroke="${c}" stroke-width="1.8"/>`;
+  const sun = `<circle cx="12" cy="12" r="4.5" fill="none" stroke="${c}" stroke-width="1.8"/><g stroke="${c}" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></g>`;
+  const rain = `<g stroke="${c}" stroke-width="1.6" stroke-linecap="round"><path d="M9 20.5l-1 2M13 20.5l-1 2M17 20.5l-1 2"/></g>`;
+  const snow = `<g fill="${c}"><circle cx="9" cy="21.5" r="1"/><circle cx="13" cy="21.5" r="1"/><circle cx="17" cy="21.5" r="1"/></g>`;
+  const bolt = `<path d="M13 18l-2 3h3l-2 3" fill="none" stroke="#f0a500" stroke-width="1.6"/>`;
+  let inner;
+  if (code == null) inner = cloud;
+  else if (code <= 1) inner = sun;
+  else if (code <= 48) inner = cloud;
+  else if ((code >= 71 && code <= 77) || code === 85 || code === 86) inner = `<g transform="translate(0,-3)">${cloud}</g>` + snow;
+  else if (code >= 95) inner = `<g transform="translate(0,-3)">${cloud}</g>` + bolt;
+  else inner = `<g transform="translate(0,-3)">${cloud}</g>` + rain;
+  return `<svg width="34" height="34" viewBox="0 0 24 24">${inner}</svg>`;
+}
+
+/* =========================================================
+   Rafraîchissement de l'écran principal
+   ========================================================= */
+function render(a) {
+  let st, sub = '';
+  if (a.rainingNow) {
+    st = 'Il pleut actuellement';
+    sub = a.end ? 'Fin vers ' + hm5(a.end) : 'Pas de fin prévue dans l’heure';
+  } else if (a.start) {
+    const m = inMin(a.start, a.now);
+    st = m <= 0 ? 'Pluie imminente' : 'Pluie dans ' + m + ' min';
+    sub = 'Début vers ' + hm5(a.start) + (a.end ? ' · fin vers ' + hm5(a.end) : '');
+  } else {
+    st = 'Pas de pluie dans l’heure';
+  }
+  $('status').textContent = st;
+  $('status').classList.remove('err');
+  $('substatus').textContent = sub ? sub + '  ·  maj ' + hm(Date.now()) : 'maj ' + hm(Date.now());
+  drawCompass(a);
+  drawChart(a);
+  $('temp').textContent = a.temp != null ? Math.round(a.temp) + '°C' : '–';
+  $('wIcon').innerHTML = weatherIcon(a.code);
+}
+
+let loading = false, lastLoad = 0;
+async function refresh() {
+  if (loading) return;
+  loading = true;
+  $('btnRefresh').style.opacity = .4;
+  try {
+    $('placeName').textContent = place.name;
+    const j = await fetchForecast(place.lat, place.lon);
+    wx = analyse(j);
+    render(wx);
+    lastLoad = Date.now();
+  } catch (e) {
+    $('status').textContent = 'Données indisponibles';
+    $('status').classList.add('err');
+    $('substatus').textContent = 'Vérifiez la connexion puis touchez ↻';
+  } finally {
+    loading = false;
+    $('btnRefresh').style.opacity = 1;
+  }
+}
+
+/* =========================================================
+   Radar animé (RainViewer, 2 dernières heures)
+   ========================================================= */
+let map = null, meMarker = null, frames = [], layers = [], cur = 0, timer = null, radarLoaded = 0;
+
+function initMap() {
+  map = L.map('map', { zoomControl: false, attributionControl: true, maxZoom: 12, minZoom: 4 })
+    .setView([place.lat, place.lon], 8);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    subdomains: 'abcd', maxZoom: 19,
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/">CARTO</a> · Radar © <a href="https://www.rainviewer.com/">RainViewer</a>'
+  }).addTo(map);
+}
+function placeMe() {
+  const icon = L.divIcon({ className: '', html: '<div class="me"></div>', iconSize: [22, 22], iconAnchor: [11, 11] });
+  if (meMarker) meMarker.setLatLng([place.lat, place.lon]);
+  else meMarker = L.marker([place.lat, place.lon], { icon, interactive: false, zIndexOffset: 1000 }).addTo(map);
+}
+async function loadRadar() {
+  const r = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+  const j = await r.json();
+  layers.forEach(l => map.removeLayer(l));
+  frames = (j.radar.past || []).concat(j.radar.nowcast || []);
+  layers = frames.map(f => L.tileLayer(j.host + f.path + '/256/{z}/{x}/{y}/2/1_1.png', {
+    opacity: 0, maxNativeZoom: 7, maxZoom: 12, zIndex: 10, tileSize: 256
+  }).addTo(map));
+  radarLoaded = Date.now();
+  $('slider').max = frames.length - 1;
+  buildTicks();
+  show(frames.length - 1);
+}
+function buildTicks() {
+  const box = $('ticks'); box.innerHTML = '';
+  const n = frames.length; if (n < 2) return;
+  const step = n > 8 ? 3 : 1;
+  for (let i = 0; i < n; i += step) {
+    const pct = i / (n - 1) * 100;
+    // compensation de la largeur du curseur (20 px)
+    box.insertAdjacentHTML('beforeend',
+      `<span style="left:calc(${pct}% + ${(10 - pct * 0.2).toFixed(1)}px)">${hm(frames[i].time * 1000)}</span>`);
+  }
+}
+function show(i) {
+  if (!layers.length) return;
+  layers[cur] && layers[cur].setOpacity(0);
+  cur = i;
+  layers[cur].setOpacity(0.78);
+  $('slider').value = i;
+  const d = new Date(frames[i].time * 1000);
+  $('stamp').textContent = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${hm(d)}`;
+}
+function setPlaying(on) {
+  clearTimeout(timer); timer = null;
+  $('playIco').innerHTML = on ? '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>' : '<path d="M7 4v16l13-8z"/>';
+  if (on) {
+    const step = () => {
+      const next = (cur + 1) % frames.length;
+      show(next);
+      timer = setTimeout(step, next === frames.length - 1 ? 1500 : 450);
+    };
+    if (cur === frames.length - 1) show(0);
+    timer = setTimeout(step, 450);
+  }
+}
+
+async function openRadar() {
+  $('main').classList.add('hidden');
+  $('radar').classList.remove('hidden');
+  $('radarTitle').textContent = place.name;
+  if (!map) initMap(); else map.invalidateSize();
+  map.setView([place.lat, place.lon], map.getZoom() || 8);
+  placeMe();
+  if (Date.now() - radarLoaded > 4 * 60000) {
+    try { await loadRadar(); setPlaying(true); }
+    catch { $('stamp').textContent = 'Radar indisponible'; }
+  } else setPlaying(true);
+}
+function closeRadar() {
+  setPlaying(false);
+  $('radar').classList.add('hidden');
+  $('main').classList.remove('hidden');
+}
+
+/* Navigation : #radar, pour que le bouton retour d'Android fonctionne */
+function route() { location.hash === '#radar' ? openRadar() : closeRadar(); }
+window.addEventListener('hashchange', route);
+$('btnRadar').onclick = () => { location.hash = 'radar'; };
+$('btnBack').onclick = () => { history.length > 1 ? history.back() : (location.hash = ''); };
+$('btnLocate').onclick = () => map && map.setView([place.lat, place.lon], 9);
+$('play').onclick = () => setPlaying(!timer);
+$('slider').oninput = e => { setPlaying(false); show(+e.target.value); };
+
+/* =========================================================
+   Choix du lieu
+   ========================================================= */
+let searchT = null;
+$('btnPlace').onclick = () => { $('picker').classList.remove('hidden'); $('search').value = ''; $('results').innerHTML = ''; setTimeout(() => $('search').focus(), 50); };
+$('btnClose').onclick = () => $('picker').classList.add('hidden');
+$('picker').onclick = e => { if (e.target.id === 'picker') $('picker').classList.add('hidden'); };
+$('search').oninput = e => {
+  clearTimeout(searchT);
+  const q = e.target.value.trim();
+  if (q.length < 2) { $('results').innerHTML = ''; return; }
+  searchT = setTimeout(async () => {
+    try {
+      const r = await fetch('https://geocoding-api.open-meteo.com/v1/search?count=6&language=fr&format=json&name=' + encodeURIComponent(q));
+      const j = await r.json();
+      $('results').innerHTML = (j.results || []).map((p, i) =>
+        `<button class="row" data-i="${i}">${p.name} <small>${[p.postcodes && p.postcodes[0], p.admin1, p.country].filter(Boolean).join(', ')}</small></button>`
+      ).join('') || '<div class="row"><small>Aucun résultat</small></div>';
+      $('results').querySelectorAll('button').forEach(b => b.onclick = () => {
+        const p = j.results[+b.dataset.i];
+        place = { name: p.name, lat: p.latitude, lon: p.longitude, gps: false };
+        store.set('averse.place', place);
+        $('picker').classList.add('hidden');
+        refresh();
+      });
+    } catch { $('results').innerHTML = '<div class="row"><small>Recherche impossible</small></div>'; }
+  }, 300);
+};
+$('btnGps').onclick = async () => {
+  $('btnGps').textContent = '📍 Localisation…';
+  try { await useGps(); $('picker').classList.add('hidden'); refresh(); }
+  catch { alertRow('Position refusée ou indisponible'); }
+  finally { $('btnGps').textContent = '📍 Utiliser ma position'; }
+};
+function alertRow(msg) { $('results').innerHTML = `<div class="row"><small>${msg}</small></div>`; }
+$('btnRefresh').onclick = async () => {
+  if (place.gps) { try { await useGps(); } catch {} }
+  refresh();
+};
+
+/* =========================================================
+   Démarrage
+   ========================================================= */
+(async function start() {
+  drawCompass(null); drawChart(null);
+  if (!place) {
+    place = DEFAULT_PLACE;
+    $('placeName').textContent = place.name;
+    try { await useGps(); } catch { store.set('averse.place', place); }
+  } else if (place.gps) {
+    try { await useGps(); } catch {}
+  }
+  await refresh();
+  if (location.hash === '#radar') openRadar();
+  setInterval(() => { if (!document.hidden) refresh(); }, REFRESH_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && Date.now() - lastLoad > 2 * 60000) refresh();
+  });
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>
+</body>
+</html>
