@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#d6f3ee">
 <title>Averse</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -11,11 +11,11 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
-    --cyan:#3cc8ee; --cyan-pale:#d3f2fb; --blue:#1a8fe3; --gray:#c9cdd1; --gray-l:#e6e8ea;
+    --cyan:#3cc8ee; --cyan-pale:#c4ecf6; --blue:#1a8fe3; --gray:#b5cfc8; --gray-l:#bfe0d8; --bg:#d6f3ee;
     --txt:#222; --muted:#8a9096;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;height:100%;background:#fff;color:var(--txt);
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
     font-family:-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
   button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
   .view{position:fixed;inset:0;display:flex;flex-direction:column;
@@ -29,7 +29,7 @@
 
   /* ---------- Barre du haut ---------- */
   .topbar{height:52px;flex:0 0 52px;display:flex;align-items:center;justify-content:space-between;
-    padding:0 12px;border-bottom:1px solid var(--gray-l);background:#fff;position:relative;z-index:500}
+    padding:0 12px;border-bottom:1px solid var(--gray-l);background:var(--bg);position:relative;z-index:500}
   .topbar .side{width:72px;display:flex;align-items:center}
   .topbar .side.r{justify-content:flex-end;gap:14px}
   .ico{width:26px;height:26px;color:var(--blue)}
@@ -58,9 +58,9 @@
   /* ---------- Radar ---------- */
   #map{flex:1;background:#e9eef2}
   .stamp{position:absolute;left:50%;transform:translateX(-50%);bottom:92px;z-index:600;
-    background:rgba(255,255,255,.85);padding:3px 10px;border-radius:4px;font-size:17px;
+    background:rgba(214,243,238,.9);padding:3px 10px;border-radius:4px;font-size:17px;
     font-variant-numeric:tabular-nums;pointer-events:none}
-  .timeline{position:relative;z-index:600;height:64px;flex:0 0 64px;background:#fff;
+  .timeline{position:relative;z-index:600;height:64px;flex:0 0 64px;background:var(--bg);
     border-top:1px solid var(--gray-l);display:flex;align-items:center;gap:10px;padding:0 12px}
   #play{width:40px;height:40px;border-radius:50%;background:var(--blue);display:flex;
     align-items:center;justify-content:center;flex:0 0 40px}
@@ -74,7 +74,7 @@
   #slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;
     background:#fff;border:2px solid var(--blue);margin-top:-9px;box-shadow:0 1px 3px rgba(0,0,0,.3)}
   #slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid var(--blue)}
-  .legend{position:absolute;right:10px;top:62px;z-index:600;background:rgba(255,255,255,.9);
+  .legend{position:absolute;right:10px;top:62px;z-index:600;background:rgba(214,243,238,.92);
     border-radius:6px;padding:6px 8px;font-size:11px;line-height:1.5}
   .legend i{display:inline-block;width:14px;height:10px;margin-right:5px;vertical-align:middle;border-radius:2px}
   .me{width:16px;height:16px;border-radius:50%;background:#1a6fe3;border:3px solid #fff;
@@ -84,9 +84,9 @@
 
   /* ---------- Choix du lieu ---------- */
   #picker{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:2000;display:flex;align-items:flex-start;justify-content:center}
-  #picker .card{background:#fff;width:min(94vw,460px);margin-top:calc(env(safe-area-inset-top) + 50px);
+  #picker .card{background:var(--bg);width:min(94vw,460px);margin-top:calc(env(safe-area-inset-top) + 50px);
     border-radius:12px;padding:14px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
-  #picker input{width:100%;font-size:17px;padding:10px 12px;border:1px solid var(--gray);border-radius:8px}
+  #picker input{width:100%;background:#f3fbf9;font-size:17px;padding:10px 12px;border:1px solid var(--gray);border-radius:8px}
   #picker .row{display:block;width:100%;text-align:left;padding:11px 6px;border-bottom:1px solid var(--gray-l);font-size:16px}
   #picker .row small{color:var(--muted)}
   #picker .gps{color:var(--blue);font-weight:600}
@@ -303,14 +303,14 @@ function drawCompass(a) {
       const m = inMin(a.start, a.now); l1 = m <= 0 ? 'Pluie' : 'Début dans'; l2 = m <= 0 ? 'imminente' : m + ' min';
     } else { l1 = 'Pas de'; l2 = 'pluie'; }
   }
-  const disc = raining ? 'var(--cyan-pale)' : (soon ? '#e4f6fc' : '#eef1f3');
+  const disc = raining ? 'var(--cyan-pale)' : (soon ? '#dcf3f8' : '#e9f7f4');
   const dot = soon ? 'var(--cyan)' : '#b8c2c9';
   let drop = '';
   if (a && soon && a.dir != null) {
     const th = a.dir * Math.PI / 180, R = 100;
     const x = 150 + R * Math.sin(th), y = 150 - R * Math.cos(th);
     drop = `<g transform="translate(${x.toFixed(1)},${y.toFixed(1)})">
-      <circle r="33" fill="#fff" stroke="var(--cyan)" stroke-width="2.5"/>
+      <circle r="33" fill="var(--bg)" stroke="var(--cyan)" stroke-width="2.5"/>
       <g transform="rotate(${(a.dir + 180).toFixed(0)})">
         <path d="M0,-21 C9,-9 15,-1 15,6 A15,15 0 1 1 -15,6 C-15,-1 -9,-9 0,-21Z" fill="var(--cyan)"/>
       </g></g>`;
@@ -318,13 +318,13 @@ function drawCompass(a) {
   const L = (t, x, y) => `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central"
       font-size="30" fill="#b5bbc0" font-weight="300">${t}</text>`;
   svg.innerHTML = `
-    <circle cx="150" cy="150" r="146" fill="#fff" stroke="#d7dadd" stroke-width="1.5"/>
+    <circle cx="150" cy="150" r="146" fill="var(--bg)" stroke="#b9d9d1" stroke-width="1.5"/>
     ${L('N', 150, 22)}${L('S', 150, 278)}${L('W', 22, 150)}${L('E', 278, 150)}
-    <circle cx="150" cy="150" r="100" fill="none" stroke="#dcdfe2" stroke-width="13"/>
+    <circle cx="150" cy="150" r="100" fill="none" stroke="#c3e0d9" stroke-width="13"/>
     <circle cx="150" cy="150" r="88" fill="${disc}"/>
     <circle cx="150" cy="150" r="44" fill="${dot}"/>
     <text x="150" y="${l2 ? 140 : 150}" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="13" font-weight="600">${l1}</text>
-    <text x="150" y="162" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="18" font-weight="700">${l2}</text>
+    <text x="150" y="162" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="${l2.length > 7 ? 14 : 18}" font-weight="700">${l2}</text>
     ${drop}`;
 }
 
@@ -350,13 +350,13 @@ function drawChart(a) {
   // lignes de repère
   [['Forte', LEVELS.forte], ['Moyenne', LEVELS.moyenne], ['Faible', LEVELS.faible]].forEach(([n, v]) => {
     const y = yOf(v);
-    s += `<line x1="0" x2="360" y1="${y}" y2="${y}" stroke="#d5d8db" stroke-width="1"/>
+    s += `<line x1="0" x2="360" y1="${y}" y2="${y}" stroke="#b9d9d1" stroke-width="1"/>
 `;
   });
-  s += `<line x1="0" x2="360" y1="138" y2="138" stroke="#d5d8db"/>`;
+  s += `<line x1="0" x2="360" y1="138" y2="138" stroke="#b9d9d1"/>`;
   let labels = '';
   [['Forte', LEVELS.forte], ['Moyenne', LEVELS.moyenne], ['Faible', LEVELS.faible]].forEach(([n, v]) => {
-    labels += `<text x="6" y="${yOf(v) - 6}" font-size="12" fill="#333" stroke="#fff" stroke-width="3" paint-order="stroke">${n}</text>`;
+    labels += `<text x="6" y="${yOf(v) - 6}" font-size="12" fill="#333" stroke="#d6f3ee" stroke-width="3" paint-order="stroke">${n}</text>`;
   });
   if (a) {
     const xOf = t => X0 + (t - a.now) / 3600000 * (X1 - X0);
@@ -367,7 +367,7 @@ function drawChart(a) {
       up.push(x + ',' + yOf(p.r > 0.02 ? p.r * 1.45 + 0.15 : p.r).toFixed(1));
       lo.push(x + ',' + yOf(p.r * 0.6).toFixed(1));
     });
-    s += `<polygon points="${up.join(' ')} ${lo.reverse().join(' ')}" fill="#d9dcdf" opacity=".75"/>`;
+    s += `<polygon points="${up.join(' ')} ${lo.reverse().join(' ')}" fill="#b9d9d1" opacity=".75"/>`;
     s += `<polyline points="${mid.join(' ')}" fill="none" stroke="var(--cyan)" stroke-width="2.5" stroke-linejoin="round"/>`;
     // repères de début / fin
     [a.start, a.end].forEach(t => {
