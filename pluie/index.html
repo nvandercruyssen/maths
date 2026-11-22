@@ -75,6 +75,7 @@
   .me{width:16px;height:16px;border-radius:50%;background:#1a6fe3;border:3px solid #fff;
     box-shadow:0 0 0 2px rgba(26,111,227,.35),0 1px 4px rgba(0,0,0,.4)}
   .leaflet-control-attribution{font-size:10px}
+  .basemap{filter:grayscale(.55) brightness(1.06) contrast(.9)}
 
   /* ---------- Choix du lieu ---------- */
   #picker{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:2000;display:flex;align-items:flex-start;justify-content:center}
@@ -136,9 +137,11 @@
   </div>
   <div id="map"></div>
   <div class="legend">
-    <div><i style="background:#9bd9f5"></i>Faible</div>
-    <div><i style="background:#2f7fd8"></i>Modérée</div>
-    <div><i style="background:#a5326e"></i>Forte</div>
+    <div><i style="background:#c9c9c9"></i>Très faible</div>
+    <div><i style="background:#62c8f0"></i>Faible</div>
+    <div><i style="background:#1d5fc4"></i>Modérée</div>
+    <div><i style="background:#f2d21b"></i>Forte</div>
+    <div><i style="background:#e0263a"></i>Très forte</div>
   </div>
   <div class="stamp" id="stamp">–</div>
   <div class="timeline">
@@ -450,9 +453,9 @@ let map = null, meMarker = null, frames = [], layers = [], cur = 0, timer = null
 function initMap() {
   map = L.map('map', { zoomControl: false, attributionControl: true, maxZoom: 12, minZoom: 4 })
     .setView([place.lat, place.lon], 8);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    subdomains: 'abcd', maxZoom: 19,
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/">CARTO</a> · Radar © <a href="https://www.rainviewer.com/">RainViewer</a>'
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, className: 'basemap',
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · Radar © <a href="https://www.rainviewer.com/">RainViewer</a>'
   }).addTo(map);
 }
 function placeMe() {
