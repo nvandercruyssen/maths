@@ -21,6 +21,11 @@
   .view{position:fixed;inset:0;display:flex;flex-direction:column;
     padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
   .hidden{display:none!important}
+  @keyframes inRight{from{transform:translateX(100%)}to{transform:none}}
+  @keyframes inLeft{from{transform:translateX(-30%);opacity:.6}to{transform:none;opacity:1}}
+  .in-right{animation:inRight .28s ease-out}
+  .in-left{animation:inLeft .25s ease-out}
+  #main .content{touch-action:pan-y}
 
   /* ---------- Barre du haut ---------- */
   .topbar{height:52px;flex:0 0 52px;display:flex;align-items:center;justify-content:space-between;
@@ -513,6 +518,7 @@ function setPlaying(on) {
 async function openRadar() {
   $('main').classList.add('hidden');
   $('radar').classList.remove('hidden');
+  animate($('radar'), 'in-right');
   $('radarTitle').textContent = place.name;
   if (!map) initMap(); else map.invalidateSize();
   map.setView([place.lat, place.lon], map.getZoom() || 8);
@@ -524,9 +530,33 @@ async function openRadar() {
 }
 function closeRadar() {
   setPlaying(false);
+  const wasOpen = !$('radar').classList.contains('hidden');
   $('radar').classList.add('hidden');
   $('main').classList.remove('hidden');
+  if (wasOpen) animate($('main'), 'in-left');
 }
+function animate(el, cls) {
+  el.classList.remove('in-left', 'in-right'); void el.offsetWidth; el.classList.add(cls);
+  el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
+}
+
+/* Balayage : droite → gauche sur l'écran principal = radar ;
+   gauche → droite depuis le bord gauche du radar = retour (le reste de la carte reste déplaçable) */
+function onSwipe(el, test, action) {
+  let x0 = null, y0 = 0, t0 = 0;
+  el.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) { x0 = null; return; }
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  el.addEventListener('touchend', e => {
+    if (x0 == null) return;
+    const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+    if (Date.now() - t0 < 800 && Math.abs(dx) > 60 && Math.abs(dy) < Math.abs(dx) * 0.6 && test(dx, x0)) action();
+    x0 = null;
+  }, { passive: true });
+}
+onSwipe($('main'), dx => dx < 0, () => { location.hash = 'radar'; });
+onSwipe($('radar'), (dx, x0) => dx > 0 && x0 < 30, () => $('btnBack').click());
 
 /* Navigation : #radar, pour que le bouton retour d'Android fonctionne */
 function route() { location.hash === '#radar' ? openRadar() : closeRadar(); }
